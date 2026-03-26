@@ -57,7 +57,44 @@ public class RentalService {
     }
     
 
+    public void MarkEquipmentUnavailable(string equipmentId) {
+        var equipment = _equipment.FirstOrDefault(e => e.Id.ToString("N") == equipmentId || e.Id.ToString() == equipmentId)
+                        ?? throw new ArgumentException("Nie znaleziono sprzętu.");
+
+        if (equipment.Status == StatusEq.Rented) {
+            throw new InvalidOperationException("Nie można oznaczyć wypożyczonego sprzętu jako niedostępny.");
+        }
+
+        equipment.Status = StatusEq.Unavailable;
+    }
+
     public IEnumerable<EQ> GetAllEquipment() => _equipment;
     public IEnumerable<EQ> GetAvailableEquipment() => _equipment.Where(e => e.Status == StatusEq.Available);
     public IEnumerable<Rental> GetActiveRentalsForUser(string userId) => _rentals.Where(r => r.UserId == userId && r.IsActive);
+
+    public IEnumerable<Rental> GetOverdueRentals(DateTime today) =>
+        _rentals.Where(r => r.IsActive && r.IsOverdue(today));
+
+    public string GenerateReport(DateTime today) {
+        var totalEquipment = _equipment.Count;
+        var available = _equipment.Count(e => e.Status == StatusEq.Available);
+        var rented = _equipment.Count(e => e.Status == StatusEq.Rented);
+        var unavailable = _equipment.Count(e => e.Status == StatusEq.Unavailable);
+        var activeRentals = _rentals.Count(r => r.IsActive);
+        var overdueRentals = _rentals.Count(r => r.IsActive && r.IsOverdue(today));
+        var totalLateFees = _rentals.Sum(r => r.LateFee);
+
+        return $"""
+            === RAPORT WYPOŻYCZALNI ===
+            Sprzęt łącznie: {totalEquipment}
+              - Dostępny: {available}
+              - Wypożyczony: {rented}
+              - Niedostępny: {unavailable}
+            Użytkownicy: {_users.Count}
+            Aktywne wypożyczenia: {activeRentals}
+            Przeterminowane: {overdueRentals}
+            Suma naliczonych kar: {totalLateFees:C}
+            ==========================
+            """;
+    }
 }
