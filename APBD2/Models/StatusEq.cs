@@ -1,6 +1,8 @@
 ﻿namespace APBD2.Models;
 
-public class StatusEq
+public enum StatusEq
 {
-    
+    Available,
+    Rented,
+    Unavailable
 }
