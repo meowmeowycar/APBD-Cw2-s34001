@@ -11,6 +11,7 @@ public abstract class User {
     public string FirstName { get; }
     public string LastName { get; }
     public abstract UserType UserType { get; }
+    public abstract int MaxRentals { get; }
 
     public override string ToString() {
         return $"{FirstName} {LastName}";
